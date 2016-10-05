@@ -72,5 +72,22 @@
         android:layout_marginTop="10sp"
         android:id="@+id/btnReset"
         android:text="@string/label_reset"/>
+    
+    <ScrollView
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:scrollbars="vertical"
+        android:fillViewport="true"
+        android:id="@+id/scrollLogs"
+        android:layout_below="@+id/btnRoll"
+        android:layout_marginTop="10sp">
+
+        <TextView
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent"
+            android:id="@+id/txtLogs"
+            android:text="These are logs\nMore logs"
+            android:textSize="12sp"/>
+    </ScrollView>
 
 </RelativeLayout>
