@@ -6,6 +6,7 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.util.Random;
 
@@ -17,6 +18,7 @@ public class MainActivity extends AppCompatActivity {
     Button btnRoll, btnHold, btnReset;
     private Random random = new Random();
     private int currentUserScore;
+    private final int MAX_SCORE = 100;
     private int diceIcons [] = {
             R.drawable.dice1, R.drawable.dice2, R.drawable.dice3,
             R.drawable.dice4, R.drawable.dice5, R.drawable.dice6
@@ -59,6 +61,7 @@ public class MainActivity extends AppCompatActivity {
     private void computerTurn(){
         int currentScore = 0, num;
         Random newRandom = new Random(); // using the same random affects seed
+        int currentComputerScore = Integer.parseInt(txtComputerScore.getText().toString());
         do {
             num = random.nextInt(6) + 1;
             imgDice.setImageResource(diceIcons[num-1]);
@@ -67,9 +70,12 @@ public class MainActivity extends AppCompatActivity {
                 break;
             } else {
                 currentScore += num;
+                if ((currentComputerScore + currentScore) >= MAX_SCORE){
+                    endGame("Computer");
+                    return;
+                }
             }
         } while (newRandom.nextInt(8) < 6); // 75 % chances to play
-        int currentComputerScore = Integer.parseInt(txtComputerScore.getText().toString());
         currentComputerScore += currentScore;
         txtComputerScore.setText("" + currentComputerScore);
         // set current turn user score back to 0
@@ -86,9 +92,18 @@ public class MainActivity extends AppCompatActivity {
             computerTurn();
         } else {
             currentScore += num;
+            if (currentScore >= MAX_SCORE){
+                endGame("User");
+                return;
+            }
             currentUserScore += num;
             txtUserScore.setText(currentScore + "");
         }
+    }
+
+    private void endGame(String winner){
+        (Toast.makeText(this, "Game over. " + winner + " won", Toast.LENGTH_LONG)).show();
+        onStart();
     }
 
     @Override
