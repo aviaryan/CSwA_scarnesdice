@@ -51,18 +51,44 @@ public class MainActivity extends AppCompatActivity {
         btnHold.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-
+                computerTurn();
             }
         });
+    }
+
+    private void computerTurn(){
+        int currentScore = 0, num;
+        Random newRandom = new Random(); // using the same random affects seed
+        do {
+            num = random.nextInt(6) + 1;
+            imgDice.setImageResource(diceIcons[num-1]);
+            if (num == 1){
+                currentScore = 0;
+                break;
+            } else {
+                currentScore += num;
+            }
+        } while (newRandom.nextInt(8) < 6); // 75 % chances to play
+        int currentComputerScore = Integer.parseInt(txtComputerScore.getText().toString());
+        currentComputerScore += currentScore;
+        txtComputerScore.setText("" + currentComputerScore);
+        // set current turn user score back to 0
+        currentUserScore = 0;
     }
 
     private void rollDice(){
         int num = random.nextInt(6) + 1;
         int currentScore = Integer.parseInt(txtUserScore.getText().toString());
         imgDice.setImageResource(diceIcons[num-1]);
-        currentScore += num;
-        currentUserScore += num;
-        txtUserScore.setText(currentScore + "");
+        if (num == 1){
+            currentScore -= currentUserScore;
+            txtUserScore.setText(currentScore + "");
+            computerTurn();
+        } else {
+            currentScore += num;
+            currentUserScore += num;
+            txtUserScore.setText(currentScore + "");
+        }
     }
 
     @Override
