@@ -1,5 +1,6 @@
 package in.aviaryan.scarnesdice;
 
+import android.os.Handler;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
@@ -19,12 +20,14 @@ public class MainActivity extends AppCompatActivity {
     ImageView imgDice;
     Button btnRoll, btnHold, btnReset;
     private Random random = new Random();
-    private int currentUserScore;
+    private Random otherRandom = new Random();
+    private int currentUserScore, currentComputerScore, sureComputerScore;
     private final int MAX_SCORE = 100;
     private int diceIcons [] = {
             R.drawable.dice1, R.drawable.dice2, R.drawable.dice3,
             R.drawable.dice4, R.drawable.dice5, R.drawable.dice6
     };
+    private Handler timerHandler = new Handler();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -58,38 +61,66 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 addLog("User gave a HOLD. Computer turn now");
-                computerTurn();
+                startComputerTurn();
             }
         });
     }
 
-    private void computerTurn(){
-        int currentScore = 0, num;
-        Random newRandom = new Random(); // using the same random affects seed
-        int currentComputerScore = Integer.parseInt(txtComputerScore.getText().toString());
-        do {
-            num = random.nextInt(6) + 1;
-            imgDice.setImageResource(diceIcons[num-1]);
-            if (num == 1){
-                currentScore = 0;
-                addLog("Computer rolled a 1. RESET");
-                break;
-            } else {
-                addLog("Computer rolled a " + num);
-                currentScore += num;
-                if ((currentComputerScore + currentScore) >= MAX_SCORE){
-                    endGame("Computer");
-                    return;
+    Runnable computerTurnRunnable = new Runnable() {
+        @Override
+        public void run() {
+            if (otherRandom.nextInt(10) < 7 || currentComputerScore == 0){ // 70% chances to play
+                // play first chance anyway, don't hold first chance
+                boolean b = computerTurn();
+                if (b){
+                    timerHandler.postDelayed(this, 1000);
+                } else {
+                    endComputerTurn();
                 }
+            } else { // hold
+                addLog("Computer gave a HOLD. User turn now");
+                endComputerTurn();
             }
-        } while (newRandom.nextInt(8) < 5); // 62.5 % chances to play
-        currentComputerScore += currentScore;
-        txtComputerScore.setText("" + currentComputerScore);
-        // update log in case computer gave a HOLD
-        if (currentScore != 0)
-            addLog("Computer gave a HOLD. User turn now");
-        // set current turn user score back to 0
+        }
+    };
+
+    private void endComputerTurn(){
+        updateComputerScoreBoard();
+        btnHold.setEnabled(true);
+        btnRoll.setEnabled(true);
+    }
+
+    private void startComputerTurn(){
+        btnHold.setEnabled(false);
+        btnRoll.setEnabled(false);
         currentUserScore = 0;
+        currentComputerScore = 0;
+        sureComputerScore = Integer.parseInt(txtComputerScore.getText().toString());
+        timerHandler.postDelayed(computerTurnRunnable, 500);
+    }
+
+    private void updateComputerScoreBoard(){
+        txtComputerScore.setText("" + (sureComputerScore + currentComputerScore));
+    }
+
+    private boolean computerTurn(){
+        int num;
+        num = random.nextInt(6) + 1;
+        imgDice.setImageResource(diceIcons[num-1]);
+        if (num == 1){
+            currentComputerScore = 0;
+            addLog("Computer rolled a 1. RESET");
+            return false;
+        } else {
+            addLog("Computer rolled a " + num);
+            currentComputerScore += num;
+            updateComputerScoreBoard();
+            if ((sureComputerScore + currentComputerScore) >= MAX_SCORE){
+                endGame("Computer");
+                return false;
+            }
+        }
+        return true;
     }
 
     private void rollDice(){
@@ -100,7 +131,7 @@ public class MainActivity extends AppCompatActivity {
             currentScore -= currentUserScore;
             txtUserScore.setText(currentScore + "");
             addLog("User rolled a 1. RESET");
-            computerTurn();
+            startComputerTurn();
         } else {
             currentScore += num;
             if (currentScore >= MAX_SCORE){
@@ -122,9 +153,12 @@ public class MainActivity extends AppCompatActivity {
     protected void onStart() {
         super.onStart();
         currentUserScore = 0;
+        currentComputerScore = 0;
+        sureComputerScore = 0;
         txtUserScore.setText("0");
         txtComputerScore.setText("0");
         txtLogs.setText("");
+        timerHandler.removeCallbacks(computerTurnRunnable);
     }
 
     private void addLog(String msg){
